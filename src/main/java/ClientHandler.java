@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 public class ClientHandler extends ChannelInboundHandlerAdapter {
     private static final long MESSAGE_COUNT = 1000000L;
     private static final long CONFIDENTIAL_THRESHOLD = 100000L;
-    private static long sentMessages = 0L;
     private long receivedMessages = 0L;
     private static final Histogram HISTOGRAM = new Histogram(TimeUnit.SECONDS.toNanos(10), 3);
     //    private final Timer timer = new HashedWheelTimer();
@@ -40,23 +39,25 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         try
         {
             ByteBuf m = (ByteBuf) res;
-            long elapsedTime = System.nanoTime() - m.readLong();
-            receivedMessages++;
-            if (receivedMessages % 50000 == 0)
-                System.out.println(receivedMessages);
-            if(receivedMessages > CONFIDENTIAL_THRESHOLD)
-                HISTOGRAM.recordValue(elapsedTime);
-            if(receivedMessages > 950000 && receivedMessages%1000 == 0)
-                System.out.println(receivedMessages);
-
-            if ( MESSAGE_COUNT - receivedMessages < 100) {
-                System.out.println(MESSAGE_COUNT + " " + receivedMessages);
-                System.out.println("average elapsedTime : " + HISTOGRAM.getMean() + " " + HISTOGRAM.getStdDeviation());
-//                ctx.channel().close();
-//                ctx.close();
+            long sentTime = m.readLong();
+//            System.out.println(sentTime);
+            if(sentTime < 0){
+                System.out.println("average elapsedTime : " + HISTOGRAM.getMean() + " std elapsedTime : " + HISTOGRAM.getStdDeviation() + " received : " + receivedMessages);
+                ctx.channel().close();
+                ctx.close();
+            }else if(receivedMessages > CONFIDENTIAL_THRESHOLD) {
+                HISTOGRAM.recordValue(System.nanoTime() - sentTime);
             }
+            receivedMessages++;
+
         } finally {
             ReferenceCountUtil.release(res);
         }
+    }
+
+    public void sendEndMessage() {
+        ByteBuf lastMessage = context.alloc().buffer(8);
+        lastMessage.writeLong(-1);
+        ChannelFuture f = context.writeAndFlush(lastMessage);
     }
 }

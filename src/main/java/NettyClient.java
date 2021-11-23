@@ -20,10 +20,14 @@ public class NettyClient implements Runnable {
     public static void main(String[] args) throws Exception {
         NettyClient handler = new NettyClient();
         handler.startClient();
-        for (int i = 0; i < 1000000; i++) {
+        for (int i = 0; i < 1500000; i++) {
             handler.writeMessage();
-            Thread.sleep(0, 100000);
+            long s = System.nanoTime();
+            while(System.nanoTime() - s < 150000){
+                Thread.yield();
+            }
         }
+        handler.writeEndMessage();
 
     }
 
@@ -33,6 +37,10 @@ public class NettyClient implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void writeEndMessage() {
+        clientHandler.sendEndMessage();
     }
 
     public synchronized void startClient() {

@@ -8,8 +8,8 @@ import org.HdrHistogram.Histogram;
 import java.util.concurrent.TimeUnit;
 
 public class ClientHandler extends ChannelInboundHandlerAdapter {
-    private static final long MESSAGE_COUNT = 1000000L;
-    private static final long CONFIDENTIAL_THRESHOLD = 100000L;
+    private static final long MESSAGE_COUNT = 1500000L;
+    private static final long CONFIDENTIAL_THRESHOLD = 500000L;
     private long receivedMessages = 0L;
     private static final Histogram HISTOGRAM = new Histogram(TimeUnit.SECONDS.toNanos(10), 3);
     //    private final Timer timer = new HashedWheelTimer();
@@ -25,6 +25,7 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         ByteBuf time = context.alloc().buffer(8);
         time.writeLong(System.nanoTime());
         ChannelFuture f = context.writeAndFlush(time);
+//        f.await(150, TimeUnit.MICROSECONDS);
 //        f.awaitUninterruptibly();
     }
 
@@ -40,13 +41,13 @@ public class ClientHandler extends ChannelInboundHandlerAdapter {
         {
             ByteBuf m = (ByteBuf) res;
             long sentTime = m.readLong();
-//            System.out.println(sentTime);
+            long elapseTime = System.nanoTime() - sentTime;
             if(sentTime < 0){
                 System.out.println("average elapsedTime : " + HISTOGRAM.getMean() + " std elapsedTime : " + HISTOGRAM.getStdDeviation() + " received : " + receivedMessages);
                 ctx.channel().close();
                 ctx.close();
             }else if(receivedMessages > CONFIDENTIAL_THRESHOLD) {
-                HISTOGRAM.recordValue(System.nanoTime() - sentTime);
+                HISTOGRAM.recordValue(elapseTime);
             }
             receivedMessages++;
 

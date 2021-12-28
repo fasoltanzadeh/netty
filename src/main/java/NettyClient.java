@@ -43,9 +43,9 @@ public class NettyClient implements Runnable {
         clientHandler.sendEndMessage();
     }
 
-    public synchronized void startClient() {
+    public void startClient() {
         if (!isRunning) {
-            executor = Executors.newFixedThreadPool(1);
+            executor = Executors.newFixedThreadPool(8);
             executor.execute(this);
             isRunning = true;
         }
@@ -65,7 +65,6 @@ public class NettyClient implements Runnable {
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.handler(new ChannelInitializer<SocketChannel>() {
-
                 @Override
                 public void initChannel(SocketChannel ch)
                         throws Exception {

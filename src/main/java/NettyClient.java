@@ -20,7 +20,7 @@ public class NettyClient implements Runnable {
     public static void main(String[] args) throws Exception {
         NettyClient handler = new NettyClient();
         handler.startClient();
-        for (int i = 0; i < 1500000; i++) {
+        for (int i = 0; i < 2000000; i++) {
             handler.writeMessage();
             long s = System.nanoTime();
             while(System.nanoTime() - s < 150000){
@@ -45,7 +45,7 @@ public class NettyClient implements Runnable {
 
     public void startClient() {
         if (!isRunning) {
-            executor = Executors.newFixedThreadPool(8);
+            executor = Executors.newFixedThreadPool(1);
             executor.execute(this);
             isRunning = true;
         }

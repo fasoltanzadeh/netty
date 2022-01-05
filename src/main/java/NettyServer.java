@@ -41,7 +41,7 @@ public class NettyServer {
                                     new ServerHandler());
                         }
                     })
-                    .option(ChannelOption.SO_BACKLOG, 1024)
+                    .option(ChannelOption.SO_BACKLOG, 2048)
                     .childOption(ChannelOption.SO_KEEPALIVE, true);
 
             ChannelFuture f = b.bind(port).sync();
